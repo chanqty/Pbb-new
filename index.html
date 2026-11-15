@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PBB Collab Edition 3.0 // Multi-View CCTV Command Center Ultimate Pro</title>
+    <!-- Embedded PBB Eye Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><ellipse cx='50' cy='50' rx='48' ry='32' fill='%23007dfe'/><circle cx='50' cy='50' r='20' fill='%23ffb142'/><circle cx='50' cy='50' r='8' fill='%23fff'/></svg>">
+    <link rel="manifest" href="manifest.json">
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PBB Command">
+    <!-- Shaka Player compiled library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.5/shaka-player.compiled.js"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #05070a;
+            --bg-surface: #0c1017;
+            --bg-card: #121824;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-primary: #00f2fe;
+            --accent-secondary: #4facfe;
+            --accent-glow: rgba(0, 242, 254, 0.2);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ff4757;
+            --success: #2ed573;
+        }
+
+        [data-theme="matrix"] {
+            --bg-base: #020502;
+            --bg-surface: #050d05;
+            --bg-card: #0a1f0a;
+            --border-color: rgba(0, 255, 0, 0.15);
+            --accent-primary: #00ff66;
+            --accent-secondary: #2ed573;
+            --accent-glow: rgba(0, 255, 102, 0.25);
+            --success: #00ff66;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-base: #09030c;
+            --bg-surface: #15061c;
+            --bg-card: #240a30;
+            --border-color: rgba(247, 37, 133, 0.2);
+            --accent-primary: #f72585;
+            --accent-secondary: #b5179e;
+            --accent-glow: rgba(247, 37, 133, 0.3);
+            --danger: #f72585;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        .top-bar {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 57px;
+            gap: 12px;
+            overflow: visible !important;
+            z-index: 1000;
+            position: relative;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .brand h1 {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #fff, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .watching-badge {
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(46, 213, 115, 0.1);
+            color: var(--success);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(46, 213, 115, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .controls-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            overflow: visible !important;
+        }
+
+        .tool-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .tool-btn:hover, .tool-btn.active {
+            background: var(--accent-primary);
+            color: #000;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .support-btn {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: #fff;
+            border: none;
+        }
+        .support-btn:hover {
+            background: linear-gradient(135deg, #ff6b81, #ff4757);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 71, 87, 0.4);
+        }
+
+        .panic-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff;
+            border: none;
+        }
+        .panic-btn:hover {
+            box-shadow: 0 0 12px rgba(231, 76, 60, 0.5);
+        }
+
+        /* Professional Click-to-Toggle Dropdown Menu */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 6px;
+            background: var(--bg-card);
+            min-width: 190px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            z-index: 99999;
+            overflow: hidden;
+            animation: fadeIn 0.15s ease;
+        }
+        .dropdown-content button {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 10px 14px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .dropdown-content button:hover {
+            background: var(--accent-primary);
+            color: #000;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .theme-select, .layout-select {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        .clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--accent-primary);
+            background: rgba(0, 242, 254, 0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* Multiview Grid Layouts */
+        .multiview-container {
+            padding: 10px;
+            display: grid;
+            gap: 10px;
+            height: calc(100vh - 57px - 32px);
+            width: 100%;
+            transition: margin-right 0.3s;
+        }
+
+        .mode-grid {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+        }
+
+        .mode-focus {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr;
+        }
+
+        .mode-1x4 {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: 1fr;
+        }
+
+        .mode-3x1 {
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: repeat(3, 1fr);
+        }
+        .mode-3x1 #card0 {
+            grid-row: span 3;
+        }
+
+        .cctv-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .cctv-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .cctv-header {
+            background: rgba(0,0,0,0.6);
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 2;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .cctv-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cctv-title input {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-main);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            outline: none;
+            width: 170px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--danger);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Audio VuMeter Bars */
+        .vumeter {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+            width: 24px;
+            margin-left: 4px;
+        }
+        .vumeter span {
+            width: 3px;
+            background: var(--success);
+            height: 20%;
+            border-radius: 1px;
+            transition: height 0.1s ease;
+        }
+
+        .cctv-tools {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .cctv-action {
+            background: rgba(255,255,255,0.06);
+            border: none;
+            color: var(--text-main);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .cctv-action:hover {
+            background: var(--accent-primary);
+            color: #000;
+        }
+
+        .ptz-control-panel {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-muted);
+            z-index: 2;
+            flex-wrap: wrap;
+        }
+
+        .quality-select {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-main);
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .video-box {
+            position: relative;
+            flex: 1;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: filter 0.3s;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.2s ease;
+        }
+
+        /* Night Vision / Thermal Filter */
+        .night-vision video {
+            filter: sepia(100%) hue-rotate(60deg) saturate(400%) contrast(150%);
+        }
+
+        /* Stream Health HUD Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--success);
+            z-index: 5;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Stream Error Banner */
+        .stream-error-banner {
+            position: absolute;
+            bottom: 40px;
+            background: rgba(255, 71, 87, 0.9);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            z-index: 10;
+            display: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255,71,87,0.4);
+            text-align: center;
+        }
+
+        /* DVR Seek Bar */
+        .dvr-scrubber {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 6;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+        .video-box:hover .dvr-scrubber {
+            opacity: 1;
+        }
+        .dvr-scrubber input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-primary);
+            height: 4px;
+            cursor: pointer;
+        }
+
+        /* Scrolling Marquee Ticker */
+        .marquee-ticker {
+            background: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            height: 32px;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-primary);
+            white-space: nowrap;
+        }
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 35s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Big Brother Soundboard Modal */
+        .soundboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .sound-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .sound-btn:hover {
+            background: var(--accent-primary);
+            color: #000;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Official PBB Housemate Cards Modal */
+        .housemate-modal-card {
+            background: #0d121c;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 750px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 6px;
+            padding: 12px 20px;
+            background: #111827;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filter-tab.active, .filter-tab:hover {
+            background: var(--accent-primary);
+            color: #000;
+            border-color: var(--accent-primary);
+        }
+        .housemate-grid-modal {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 60vh;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) rgba(0,0,0,0.3);
+        }
+        .housemate-grid-modal::-webkit-scrollbar,
+        .chat-messages::-webkit-scrollbar,
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .housemate-grid-modal::-webkit-scrollbar-track,
+        .chat-messages::-webkit-scrollbar-track,
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        .housemate-grid-modal::-webkit-scrollbar-thumb,
+        .chat-messages::-webkit-scrollbar-thumb,
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .pbb-card {
+            background: linear-gradient(135deg, #121824, #1a2333);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        .pbb-card-badge-top {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 9px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+        .badge-kapamilya { background: #007dfe; color: white; padding: 2px 6px; border-radius: 4px; }
+        .badge-kapuso { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; }
+        .badge-nominated { background: #ff9f43; color: #000; padding: 2px 6px; border-radius: 4px; }
+        .badge-housemate { background: rgba(255,255,255,0.1); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; }
+
+        .pbb-avatar {
+            width: 70px;
+            height: 70px;
+            background: #1f2937;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 22px;
+            color: var(--accent-primary);
+            border: 3px solid rgba(255,255,255,0.15);
+            margin: 6px 0;
+        }
+        .pbb-name {
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+            letter-spacing: 0.5px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .pbb-fullname {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .vote-save-btn {
+            background: linear-gradient(135deg, #ff4757, #ff6b81);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+        .vote-save-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Official Nominee Card Styles in House Status Modal */
+        .nominee-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .nominee-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 10px 6px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .nominee-avatar {
+            width: 40px;
+            height: 40px;
+            background: #1f2937;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--accent-primary);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .nominee-name {
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Live Fan Chat Sidebar */
+        .chat-sidebar {
+            position: fixed;
+            top: 57px;
+            right: -320px;
+            width: 320px;
+            height: calc(100vh - 57px - 32px);
+            background: var(--bg-surface);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 8888;
+            transition: right 0.3s ease;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        .chat-sidebar.open {
+            right: 0;
+        }
+        .chat-header {
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 12px;
+        }
+        .chat-msg {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .chat-msg-user {
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .chat-msg-text {
+            color: var(--text-main);
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        .chat-input-area {
+            padding: 12px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-input-row {
+            display: flex;
+            gap: 6px;
+        }
+        .chat-input {
+            flex: 1;
+            background: var(--bg-base);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .chat-input:focus {
+            border-color: var(--accent-primary);
+        }
+        .chat-send-btn {
+            background: var(--accent-primary);
+            color: #000;
+            border: none;
+            padding: 0 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .chat-send-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* iOS PWA Install Prompt Banner */
+        .ios-pwa-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #111827, #1f2937);
+            border: 1px solid var(--accent-primary);
+            border-radius: 14px;
+            padding: 16px;
+            z-index: 99999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            0% { transform: translateY(100px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .ios-pwa-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--accent-primary);
+        }
+
+        .ios-pwa-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .ios-pwa-steps {
+            background: rgba(0,0,0,0.4);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Donation Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 7, 10, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: #0d121c;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #111827;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #ff4757;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+            max-height: calc(85vh - 140px);
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) rgba(0,0,0,0.3);
+        }
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        .modal-body::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .support-info-box {
+            background: linear-gradient(135deg, rgba(255, 71, 87, 0.08), rgba(0, 242, 254, 0.04));
+            border: 1px solid rgba(255, 71, 87, 0.2);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .support-info-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ff6b81;
+            margin-bottom: 8px;
+        }
+
+        .support-info-text {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .qr-section {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .qr-box {
+            background: #fff;
+            padding: 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            width: 140px;
+            height: 140px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .qr-box:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3);
+        }
+
+        .qr-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .gcash-badge {
+            background: #007dfe;
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 4px;
+            align-self: flex-start;
+            letter-spacing: 0.5px;
+        }
+
+        .qr-instructions {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .qr-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .qr-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .qr-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .modal-notice {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--text-muted);
+            padding: 10px 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            background: #111827;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .footer-love {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .modal-close-btn {
+            background: #1f2937;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #374151;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 1; }
+            70% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0.95); opacity: 1; }
+        }
+
+        /* Mobile Responsive Media Queries */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                overflow-y: auto;
+            }
+            .top-bar {
+                height: auto;
+                padding: 10px 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .controls-toolbar {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .multiview-container {
+                height: auto;
+                max-height: none;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: repeat(4, auto) !important;
+                padding: 8px;
+                gap: 8px;
+            }
+            .cctv-card {
+                min-height: 260px;
+            }
+            .qr-section {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .gcash-badge {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar" id="topBar">
+        <div class="brand" ondblclick="toggleAdminLoginModal(true)" title="Double click logo to open Admin Login">
+            <h1>PBB COLLAB 3.0</h1>
+            <div class="watching-badge">
+                🟢 <span id="viewerCount">1</span> watching
+            </div>
+        </div>
+        <div class="controls-toolbar">
+            <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+                <option value="default">Neon Cyan</option>
+                <option value="matrix">Matrix Green</option>
+                <option value="cyberpunk">Cyberpunk Pink</option>
+            </select>
+            <select class="layout-select" id="layoutSelect" onchange="setLayout(this.value)">
+                <option value="grid">🎛️ Quad Grid (2x2)</option>
+                <option value="focus">📺 Focus Mode</option>
+                <option value="1x4">🎞️ Strip (1x4)</option>
+                <option value="3x1">📋 Sidebar (3x1)</option>
+            </select>
+
+            <!-- Professional Dropdown Menu -->
+            <div class="dropdown">
+                <button class="tool-btn" onclick="toggleCommunityDropdown(event)">🧰 Community ▾</button>
+                <div class="dropdown-content" id="communityDropdownMenu">
+                    <button onclick="toggleChatSidebar(); closeDropdowns();">💬 Live Chat</button>
+                    <button onclick="toggleSoundboardModal(true); closeDropdowns();">🔊 Soundboard</button>
+                    <button onclick="toggleTaskModal(true); closeDropdowns();">📋 House Status</button>
+                    <button onclick="toggleHousemateModal(true); closeDropdowns();">🗳️ Housemate Vote</button>
+                    <button onclick="toggleAdminLoginModal(true); closeDropdowns();">⚙️ Admin Panel</button>
+                    <button class="support-btn" onclick="toggleDonateModal(true); closeDropdowns();" style="width: 100%; border-radius: 0;">❤️ Support</button>
+                </div>
+            </div>
+
+            <!-- Professional Stream Controls Group -->
+            <button class="tool-btn" onclick="resumeAll()" title="Play All Feeds">▶️ Resume</button>
+            <button class="tool-btn" onclick="unmuteAll()" title="Play All Audio">🔊 Unmute</button>
+            <button class="tool-btn" onclick="muteAll()">🔇 Mute All</button>
+            <button class="tool-btn" onclick="toggleMatrixWall()" title="Hotkey: F">🔲 Wall</button>
+            <button class="tool-btn panic-btn" onclick="togglePanic()" title="Hotkey: ESC">🚨 PANIC</button>
+
+            <div class="clock" id="clockDisplay">00:00:00 PHT</div>
+        </div>
+    </div>
+
+    <div class="multiview-container mode-grid" id="mainContainer">
+        <!-- Feed 1: All Access -->
+        <div class="cctv-card" id="card0" ondblclick="toggleExpandCard(0)">
+            <div class="cctv-header">
+                <div class="cctv-title">
+                    <div class="live-dot"></div>
+                    <input type="text" id="title0" value="CAM 01: ALL ACCESS" onchange="saveAlias(0, this.value)" onclick="event.stopPropagation()">
+                    <div class="vumeter" id="vumeter0">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="cctv-tools">
+                    <select class="quality-select" id="quality0" onchange="changeQuality(0, this.value)">
+                        <option value="auto">Auto Quality</option>
+                    </select>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleNightVision(0)" title="Night Vision">🟢 NV</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); copyFrameToClipboard(0)" title="Copy Snapshot to Clipboard">📋 Copy</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleMute(0)" id="muteBtn0">🔇 Mute</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); togglePip(0)">📌 PIP</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleExpandCard(0)">🔍 Expand</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleFullscreen(0)">⛶ Full</button>
+                </div>
+            </div>
+            <div class="ptz-control-panel" onclick="event.stopPropagation()">
+                <span>🔍 Zoom:</span>
+                <button class="cctv-action" onclick="zoomVideo(0, -0.2)">-</button>
+                <span id="zoomLabel0">1.0x</span>
+                <button class="cctv-action" onclick="zoomVideo(0, 0.2)">+</button>
+                <button class="cctv-action" onclick="resetZoom(0)">Reset</button>
+                <span style="margin-left: 8px;">🔊 Audio Boost:</span>
+                <input type="range" min="0" max="3" step="0.1" value="1" style="width: 80px; accent-color: var(--accent-primary);" oninput="initAudioBoost(0); setVolumeBoost(0, parseFloat(this.value))">
+                <span id="volLabel0">100%</span>
+            </div>
+            <div class="video-box" id="box0">
+                <div class="hud-overlay" id="hud0">1080p • 60fps • 0.0s</div>
+                <video id="video0" autoplay playsinline></video>
+                <div class="dvr-scrubber">
+                    <span style="font-size: 9px; font-family: 'JetBrains Mono';">LIVE DVR</span>
+                    <input type="range" id="dvr0" min="0" max="100" value="100" oninput="seekDvr(0, this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Feed 2: Collab Edition 3.0 -->
+        <div class="cctv-card" id="card1" ondblclick="toggleExpandCard(1)">
+            <div class="cctv-header">
+                <div class="cctv-title">
+                    <div class="live-dot"></div>
+                    <input type="text" id="title1" value="CAM 02: COLLAB 3.0" onchange="saveAlias(1, this.value)" onclick="event.stopPropagation()">
+                    <div class="vumeter" id="vumeter1">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="cctv-tools">
+                    <select class="quality-select" id="quality1" onchange="changeQuality(1, this.value)">
+                        <option value="auto">Auto Quality</option>
+                    </select>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleNightVision(1)" title="Night Vision">🟢 NV</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); copyFrameToClipboard(1)" title="Copy Snapshot to Clipboard">📋 Copy</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleMute(1)" id="muteBtn1">🔇 Mute</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); togglePip(1)">📌 PIP</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleExpandCard(1)">🔍 Expand</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleFullscreen(1)">⛶ Full</button>
+                </div>
+            </div>
+            <div class="ptz-control-panel" onclick="event.stopPropagation()">
+                <span>🔍 Zoom:</span>
+                <button class="cctv-action" onclick="zoomVideo(1, -0.2)">-</button>
+                <span id="zoomLabel1">1.0x</span>
+                <button class="cctv-action" onclick="zoomVideo(1, 0.2)">+</button>
+                <button class="cctv-action" onclick="resetZoom(1)">Reset</button>
+                <span style="margin-left: 8px;">🔊 Audio Boost:</span>
+                <input type="range" min="0" max="3" step="0.1" value="1" style="width: 80px; accent-color: var(--accent-primary);" oninput="initAudioBoost(1); setVolumeBoost(1, parseFloat(this.value))">
+                <span id="volLabel1">100%</span>
+            </div>
+            <div class="video-box" id="box1">
+                <div class="hud-overlay" id="hud1">1080p • 60fps • 0.0s</div>
+                <video id="video1" autoplay playsinline muted></video>
+                <div class="dvr-scrubber">
+                    <span style="font-size: 9px; font-family: 'JetBrains Mono';">LIVE DVR</span>
+                    <input type="range" id="dvr1" min="0" max="100" value="100" oninput="seekDvr(1, this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Feed 3: Dining Area -->
+        <div class="cctv-card" id="card2" ondblclick="toggleExpandCard(2)">
+            <div class="cctv-header">
+                <div class="cctv-title">
+                    <div class="live-dot"></div>
+                    <input type="text" id="title2" value="CAM 03: DINING AREA" onchange="saveAlias(2, this.value)" onclick="event.stopPropagation()">
+                    <div class="vumeter" id="vumeter2">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="cctv-tools">
+                    <select class="quality-select" id="quality2" onchange="changeQuality(2, this.value)">
+                        <option value="auto">Auto Quality</option>
+                    </select>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleNightVision(2)" title="Night Vision">🟢 NV</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); copyFrameToClipboard(2)" title="Copy Snapshot to Clipboard">📋 Copy</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleMute(2)" id="muteBtn2">🔇 Mute</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); togglePip(2)">📌 PIP</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleExpandCard(2)">🔍 Expand</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleFullscreen(2)">⛶ Full</button>
+                </div>
+            </div>
+            <div class="ptz-control-panel" onclick="event.stopPropagation()">
+                <span>🔍 Zoom:</span>
+                <button class="cctv-action" onclick="zoomVideo(2, -0.2)">-</button>
+                <span id="zoomLabel2">1.0x</span>
+                <button class="cctv-action" onclick="zoomVideo(2, 0.2)">+</button>
+                <button class="cctv-action" onclick="resetZoom(2)">Reset</button>
+                <span style="margin-left: 8px;">🔊 Audio Boost:</span>
+                <input type="range" min="0" max="3" step="0.1" value="1" style="width: 80px; accent-color: var(--accent-primary);" oninput="initAudioBoost(2); setVolumeBoost(2, parseFloat(this.value))">
+                <span id="volLabel2">100%</span>
+            </div>
+            <div class="video-box" id="box2">
+                <div class="hud-overlay" id="hud2">1080p • 60fps • 0.0s</div>
+                <video id="video2" autoplay playsinline muted></video>
+                <div class="dvr-scrubber">
+                    <span style="font-size: 9px; font-family: 'JetBrains Mono';">LIVE DVR</span>
+                    <input type="range" id="dvr2" min="0" max="100" value="100" oninput="seekDvr(2, this.value)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Feed 4: External Den -->
+        <div class="cctv-card" id="card3" ondblclick="toggleExpandCard(3)">
+            <div class="cctv-header">
+                <div class="cctv-title">
+                    <div class="live-dot"></div>
+                    <input type="text" id="title3" value="CAM 04: EXTERNAL DEN" onchange="saveAlias(3, this.value)" onclick="event.stopPropagation()">
+                    <div class="vumeter" id="vumeter3">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="cctv-tools">
+                    <select class="quality-select" id="quality3" onchange="changeQuality(3, this.value)">
+                        <option value="auto">Auto Quality</option>
+                    </select>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleNightVision(3)" title="Night Vision">🟢 NV</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); copyFrameToClipboard(3)" title="Copy Snapshot to Clipboard">📋 Copy</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleMute(3)" id="muteBtn3">🔇 Mute</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); togglePip(3)">📌 PIP</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleExpandCard(3)">🔍 Expand</button>
+                    <button class="cctv-action" onclick="event.stopPropagation(); toggleFullscreen(3)">⛶ Full</button>
+                </div>
+            </div>
+            <div class="ptz-control-panel" onclick="event.stopPropagation()">
+                <span>🔍 Zoom:</span>
+                <button class="cctv-action" onclick="zoomVideo(3, -0.2)">-</button>
+                <span id="zoomLabel3">1.0x</span>
+                <button class="cctv-action" onclick="zoomVideo(3, 0.2)">+</button>
+                <button class="cctv-action" onclick="resetZoom(3)">Reset</button>
+                <span style="margin-left: 8px;">🔊 Audio Boost:</span>
+                <input type="range" min="0" max="3" step="0.1" value="1" style="width: 80px; accent-color: var(--accent-primary);" oninput="initAudioBoost(3); setVolumeBoost(3, parseFloat(this.value))">
+                <span id="volLabel3">100%</span>
+            </div>
+            <div class="video-box" id="box3">
+                <div class="hud-overlay" id="hud3">1080p • 60fps • 0.0s</div>
+                <video id="video3" autoplay playsinline muted></video>
+                <div class="dvr-scrubber">
+                    <span style="font-size: 9px; font-family: 'JetBrains Mono';">LIVE DVR</span>
+                    <input type="range" id="dvr3" min="0" max="100" value="100" oninput="seekDvr(3, this.value)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrolling News & Quote Ticker Marquee -->
+    <div class="marquee-ticker">
+        <div class="marquee-content">
+            📢 PBB COLLAB EDITION 3.0 // 🔴 ALL CAMERAS LIVE 24/7 // ✨ WELCOME TO THE ULTIMATE MULTI-VIEW COMMAND CENTER // ❤️ SUPPORT THE COMMUNITY VIA INSTAPAY / GCASH // 🏆 HOUSEMATES ARE CURRENTLY FACING WEEKLY TASKS & NOMINATIONS!
+        </div>
+    </div>
+
+    <!-- Live Fan Chat Sidebar (Supabase Realtime) -->
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="chat-header">
+            <span>💬 PBB Community Live Chat</span>
+            <button class="modal-close" onclick="toggleChatSidebar()">✕</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg">
+                <span class="chat-msg-user">System</span>
+                <span class="chat-msg-text">Connected to Supabase Realtime!</span>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatUser" placeholder="Your Name" onchange="lockUsername()" style="margin-bottom: 4px;" title="Username locks to device after set">
+            <div class="chat-input-row">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." onkeydown="if(event.key==='Enter') sendSupabaseMessage()">
+                <button class="chat-send-btn" onclick="sendSupabaseMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Big Brother Soundboard Modal -->
+    <div class="modal-overlay" id="soundboardModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">🔊 BIG BROTHER SOUNDBOARD</div>
+                <button class="modal-close" onclick="toggleSoundboardModal(false)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-info-text">
+                    Click any iconic sound effect to broadcast the alert across your command center!
+                </div>
+                <div class="soundboard-grid">
+                    <button class="sound-btn" onclick="playSound('thisIsBigBrother')">🎙️ "This is Big Brother..."</button>
+                    <button class="sound-btn" onclick="playSound('doorBuzz')">🚪 House Door Buzzer</button>
+                    <button class="sound-btn" onclick="playSound('timerBeep')">⏱️ Countdown Beep</button>
+                    <button class="sound-btn" onclick="playSound('evictionChime')">🚨 Eviction Chime</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="footer-love">PBB Audio Effects</span>
+                <button class="modal-close-btn" onclick="toggleSoundboardModal(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Official PBB Housemate Cards & Fan Vote Modal -->
+    <div class="modal-overlay" id="housemateModal" style="display: none;">
+        <div class="housemate-modal-card">
+            <div class="modal-header">
+                <div class="modal-title">🗳️ PBB HOUSEMATES & FAN VOTE</div>
+                <button class="modal-close" onclick="toggleHousemateModal(false)">✕</button>
+            </div>
+            <div class="filter-bar">
+                <button class="filter-tab active" onclick="filterHousemates('all', this)">All</button>
+                <button class="filter-tab" onclick="filterHousemates('kapamilya', this)">Kapamilya</button>
+                <button class="filter-tab" onclick="filterHousemates('kapuso', this)">Kapuso</button>
+                <button class="filter-tab" onclick="filterHousemates('nominated', this)">Nominated</button>
+            </div>
+            <div class="housemate-grid-modal" id="housemateGridModal">
+                <!-- Populated dynamically via JS -->
+            </div>
+            <div class="modal-footer">
+                <span class="footer-love" id="voteStatusText">Vote for your favorite housemate to save! (3 votes left today)</span>
+                <button class="modal-close-btn" onclick="toggleHousemateModal(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nomination & House Task Tracker Widget Modal -->
+    <div class="modal-overlay" id="taskModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">📋 MGA NOMINADO // HOUSE STATUS</div>
+                <button class="modal-close" onclick="toggleTaskModal(false)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-info-text">
+                    <b>Weekly Task:</b> <span id="taskNameDisplay" style="color: var(--success);">Collab Synergy Challenge</span> (<span id="taskStatusDisplay">IN PROGRESS</span>)
+                </div>
+
+                <div>
+                    <div class="nominee-category cat-kapamilya">Kapamilya Nominees</div>
+                    <div class="nominee-grid" id="kapamilyaGrid">
+                        <div class="nominee-card"><div class="nominee-avatar">C</div><div class="nominee-name">CIANNE</div></div>
+                        <div class="nominee-card"><div class="nominee-avatar">N</div><div class="nominee-name">NATHAN</div></div>
+                        <div class="nominee-card"><div class="nominee-avatar">P</div><div class="nominee-name">PRIMO</div></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="nominee-category cat-kapuso">Kapuso Nominees</div>
+                    <div class="nominee-grid" id="kapusoGrid">
+                        <div class="nominee-card"><div class="nominee-avatar">B</div><div class="nominee-name">BELA</div></div>
+                        <div class="nominee-card"><div class="nominee-avatar">R</div><div class="nominee-name">RAHEEL</div></div>
+                        <div class="nominee-card"><div class="nominee-avatar">N</div><div class="nominee-name">NICOLE</div></div>
+                    </div>
+                </div>
+
+                <div class="support-info-box" style="margin-top: 4px;">
+                    <div class="support-info-title">🚨 Eviction Night</div>
+                    <div class="support-info-text" id="evictionDisplay">This Coming Sunday, 8:00 PM</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="footer-love">PBB Collab Edition 3.0</span>
+                <button class="modal-close-btn" onclick="toggleTaskModal(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Secure Admin Login Modal (Password hidden as dots) -->
+    <div class="modal-overlay" id="adminLoginModal" style="display: none;">
+        <div class="modal-card" style="max-width: 380px;">
+            <div class="modal-header">
+                <div class="modal-title">🔒 ADMIN ACCESS REQUIRED</div>
+                <button class="modal-close" onclick="toggleAdminLoginModal(false)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-info-text">
+                    Enter the secure admin password to open the command center management panel:
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <input type="password" class="chat-input" id="adminPasswordInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') verifyAdminPassword()" style="font-size: 14px; padding: 10px;">
+                    <button class="chat-send-btn" style="padding: 10px; font-size: 13px;" onclick="verifyAdminPassword()">🔐 Login to Admin</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal-overlay" id="adminModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ ADMIN PANEL // HOUSE STATUS</div>
+                <button class="modal-close" onclick="toggleAdminModal(false)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-info-text">
+                    Update current weekly task, nominees, and eviction info. This updates Supabase instantly for all viewers!
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Weekly Task:</label>
+                    <input type="text" class="chat-input" id="adminTask" value="Collab Synergy Challenge">
+
+                    <label style="font-size: 11px; font-weight: 700; color: var(--text-muted);">Eviction Night:</label>
+                    <input type="text" class="chat-input" id="adminEviction" value="This Coming Sunday, 8:00 PM">
+
+                    <button class="chat-send-btn" style="padding: 10px; margin-top: 6px;" onclick="saveHouseStatusToSupabase()">💾 Save & Sync to Supabase</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="footer-love">Admin Control</span>
+                <button class="modal-close-btn" onclick="toggleAdminModal(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- iOS PWA Install Prompt Banner (Auto-detected on iOS Safari) -->
+    <div class="ios-pwa-banner" id="iosPwaBanner" style="display: none;">
+        <div class="ios-pwa-header">
+            <span>📱 Install PBB Command App on iOS</span>
+            <button class="modal-close" onclick="dismissIosBanner()">✕</button>
+        </div>
+        <div class="ios-pwa-text">
+            For the best full-screen live streaming experience without browser bars, add this app to your iPhone/iPad Home Screen!
+        </div>
+        <div class="ios-pwa-steps">
+            <span>1. Tap the Share button <b>⎋</b> in Safari</span>
+            <span>2. Scroll & tap <b>'Add to Home Screen ➕'</b></span>
+        </div>
+    </div>
+
+    <!-- Support / Donation Modal -->
+    <div class="modal-overlay" id="donationModal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">❤️ SUPPORT THE STREAM</div>
+                <button class="modal-close" onclick="toggleDonateModal(false)">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="support-info-box">
+                    <div class="support-info-title">✨ Help Keep the Website Running</div>
+                    <div class="support-info-text">
+                        If you enjoy watching the live cameras together on one screen, feel free to donate to help cover server hosting and bandwidth costs!<br><br>
+                        Any amount is greatly appreciated and directly keeps the streams live for everyone. Maraming salamat!
+                    </div>
+                </div>
+
+                <div class="qr-section">
+                    <div class="qr-box" onclick="enlargeQR()" title="Click to enlarge QR">
+                        <img src="instapay.png" alt="InstaPay QR Code">
+                    </div>
+                    <div class="qr-details">
+                        <div class="gcash-badge">InstaPay / GCash</div>
+                        <div class="qr-instructions">Open your GCash or banking app and scan the QR code to send your support. (Click QR to enlarge)</div>
+                        <div class="qr-btn-group">
+                            <button class="qr-btn" onclick="enlargeQR()">🔍 Enlarge QR</button>
+                            <a href="instapay.png" download="instapay_qr.png" class="qr-btn" style="text-decoration: none; text-align: center;">📥 Download</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-notice">
+                    <b>NOTICE:</b> This is an independent community viewer for fans. All official broadcast streams and rights belong to ABS-CBN / iWantTFC.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="footer-love">❤️ Thank you for your support!</span>
+                <button class="modal-close-btn" onclick="toggleDonateModal(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Enlarge Lightbox Modal -->
+    <div class="modal-overlay" id="qrZoomModal" style="display: none; z-index: 10000;" onclick="toggleQrZoom(false)">
+        <div style="background: #fff; padding: 28px; border-radius: 20px; text-align: center; max-width: 90%; max-height: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.9);" onclick="event.stopPropagation()">
+            <h3 style="color: #111; margin-bottom: 16px; font-family: 'Outfit', sans-serif;">Scan to Support via InstaPay / GCash</h3>
+            <div style="position: relative; display: inline-block; background: #fff; padding: 10px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                <img id="zoomedQrImg" src="instapay.png" alt="Enlarged QR Code" style="width: 280px; height: 280px; object-fit: contain;">
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="modal-close-btn" onclick="toggleQrZoom(false)">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Official PBB Streams with Python Proxy Routing & ClearKey DRM
+        let feeds = [
+            {
+                title: "All Access Live",
+                url: "/proxy/absp-live.akamaized.net/dash/live/2099522/pbbcollab30allaccesslivestream/manifest.mpd",
+                keyId: "8150b74d16324bb4b2ff62e3e202fc7a",
+                key: "0c5ed4f9db9d4ee61bbc91b3a51ef8b5"
+            },
+            {
+                title: "Collab Edition 3.0 Live",
+                url: "/proxy/absp-live.akamaized.net/dash/live/2099522/pinoybigbrothercollabedition30live/manifest.mpd",
+                keyId: "1044e7ece2d741bcafe80d8613da104f",
+                key: "f5e17f169ff05ea40c5d3f065f523942"
+            },
+            {
+                title: "Dining Area",
+                url: "/proxy/absp-live.akamaized.net/dash/live/2099522/pbbcollab30allaccesslivestream-diningarea/manifest.mpd",
+                keyId: "ea6588d030c94ca89925ac0c49974430",
+                key: "3e6de4afee1eff8e14f9506b76ac9ee6"
+            },
+            {
+                title: "External Den",
+                url: "/proxy/absp-live.akamaized.net/dash/live/2099522/pbbcollab30allaccesslivestream-externalden/manifest.mpd",
+                keyId: "b750a40736a24e60b5a4f256208b92c5",
+                key: "af07292597f692726dcac2bd297ddf8e"
+            }
+        ];
+
+        let players = [];
+        let expandedIndex = null;
+        let adCountdownTimer = null;
+        let timeLeft = 30;
+        let isPanicked = false;
+
+        let zoomLevels = [1, 1, 1, 1];
+        let audioContexts = [];
+        let gainNodes = [];
+        let audioInitialized = [false, false, false, false];
+
+        // Official PBB Housemates Database
+        const housematesList = [
+            { name: "GEHLEE", full: "Gehlee Dangca", team: "kapamilya", nominated: false },
+            { name: "JEO", full: "Jeremiah Emmanuel Ong", team: "kapamilya", nominated: false },
+            { name: "ROBBIE", full: "Robbie Jaworski", team: "kapamilya", nominated: false },
+            { name: "CIANNE", full: "Cianne Dominguez", team: "kapamilya", nominated: true },
+            { name: "PRIMO", full: "Primo Alterado", team: "kapamilya", nominated: true },
+            { name: "CALIX", full: "Calix Esguerra", team: "kapamilya", nominated: false },
+            { name: "NATHAN", full: "Nathan Garcia", team: "kapamilya", nominated: true },
+            { name: "SHEA", full: "Sherwin 'Shea' Valerio", team: "kapamilya", nominated: false },
+            { name: "LANS", full: "Lans Nagal", team: "kapuso", nominated: false },
+            { name: "WIN", full: "Winwyn", team: "kapuso", nominated: false },
+            { name: "MIKEE", full: "Mikee Quintos", team: "kapuso", nominated: true },
+            { name: "ANTHONY", full: "Anthony Constantino", team: "kapuso", nominated: false },
+            { name: "RAHEEL", full: "Raheel Bhyria", team: "kapuso", nominated: true },
+            { name: "NICOLE", full: "Nicole Fortuna", team: "kapuso", nominated: true },
+            { name: "ETHAN", full: "Ethan Benavides", team: "kapuso", nominated: true },
+            { name: "BELA", full: "Bela Arcal", team: "kapuso", nominated: false }
+        ];
+
+        // Supabase Integration
+        const SUPABASE_URL = "https://olziazdwfjztbeiqbrbd.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_cWbsr2hZLWAyVL67RIPPlQ_Cz3V_Ave";
+        let supabaseClient = null;
+
+        function initUsernameLock() {
+            const userBox = document.getElementById('chatUser');
+            const savedName = localStorage.getItem('pbb_locked_username');
+            if (savedName) {
+                userBox.value = savedName;
+                userBox.disabled = true;
+                userBox.title = "Username is locked to this device";
+            } else {
+                const defaultUsername = "Fan_" + Math.floor(Math.random() * 9000 + 1000);
+                userBox.value = defaultUsername;
+                localStorage.setItem('pbb_locked_username', defaultUsername);
+                userBox.disabled = true;
+            }
+        }
+
+        function initSupabaseApp() {
+            initUsernameLock();
+            renderHousemates('all');
+            updateVoteStatusDisplay();
+
+            let history = JSON.parse(localStorage.getItem('pbb_chat_history') || '[]');
+            const container = document.getElementById('chatMessages');
+            if (history.length > 0) {
+                container.innerHTML = '';
+                history.forEach(msg => appendChatMessage(msg.username || msg.user, msg.text, false));
+            }
+
+            try {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+                loadSupabaseHistory();
+                loadHouseStatusFromSupabase();
+
+                supabaseClient
+                    .channel('public:pbb_chat')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pbb_chat' }, payload => {
+                        const newMsg = payload.new;
+                        if (newMsg && (newMsg.username || newMsg.user) && newMsg.text) {
+                            appendChatMessage(newMsg.username || newMsg.user, newMsg.text, true);
+                        }
+                    })
+                    .subscribe();
+
+            } catch (e) {
+                console.error('Supabase init error:', e);
+            }
+        }
+
+        function renderHousemates(filter) {
+            const grid = document.getElementById('housemateGridModal');
+            grid.innerHTML = '';
+
+            let filtered = housematesList;
+            if (filter === 'kapamilya') filtered = housematesList.filter(h => h.team === 'kapamilya');
+            else if (filter === 'kapuso') filtered = housematesList.filter(h => h.team === 'kapuso');
+            else if (filter === 'nominated') filtered = housematesList.filter(h => h.nominated);
+
+            filtered.forEach(h => {
+                const card = document.createElement('div');
+                card.className = 'pbb-card';
+                card.innerHTML = `
+                    <div class="pbb-card-badge-top">
+                        <span class="badge-${h.team}">${h.team.toUpperCase()}</span>
+                        <span class="${h.nominated ? 'badge-nominated' : 'badge-housemate'}">${h.nominated ? 'NOMINATED' : 'HOUSEMATE'}</span>
+                    </div>
+                    <div class="pbb-avatar">${h.name.charAt(0)}</div>
+                    <div class="pbb-name">${h.name}</div>
+                    <div class="pbb-fullname">${h.full}</div>
+                    <button class="vote-save-btn" onclick="voteForHousemate('${h.name}')">Vote to Save →</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterHousemates(filter, btn) {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            renderHousemates(filter);
+        }
+
+        // Anti-Spam Daily Vote Tracker (3 votes max per day)
+        function checkDailyVotes() {
+            const today = new Date().toDateString();
+            let record = JSON.parse(localStorage.getItem('pbb_vote_record') || '{}');
+            if (record.date !== today) {
+                record = { date: today, count: 0 };
+                localStorage.setItem('pbb_vote_record', JSON.stringify(record));
+            }
+            return 3 - record.count;
+        }
+
+        function updateVoteStatusDisplay() {
+            let left = checkDailyVotes();
+            document.getElementById('voteStatusText').innerText = `Vote for your favorite housemate to save! (${left} votes left today)`;
+        }
+
+        async function voteForHousemate(name) {
+            let left = checkDailyVotes();
+            if (left <= 0) {
+                alert('⚠️ You have reached your daily limit of 3 votes! Come back tomorrow.');
+                return;
+            }
+
+            let record = JSON.parse(localStorage.getItem('pbb_vote_record'));
+            record.count++;
+            localStorage.setItem('pbb_vote_record', JSON.stringify(record));
+            updateVoteStatusDisplay();
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('pbb_polls').insert([{ vote_target: name }]);
+                } catch(e) {}
+            }
+            alert(`❤️ Successfully voted to save ${name}! (${3 - record.count} votes remaining today)`);
+        }
+
+        async function loadSupabaseHistory() {
+            if (!supabaseClient) return;
+            try {
+                const { data } = await supabaseClient.from('pbb_chat').select('*').order('created_at', { ascending: true }).limit(50);
+                if (data && data.length > 0) {
+                    const container = document.getElementById('chatMessages');
+                    container.innerHTML = '';
+                    data.forEach(msg => appendChatMessage(msg.username || msg.user, msg.text, false));
+                    localStorage.setItem('pbb_chat_history', JSON.stringify(data));
+                }
+            } catch (e) {
+                console.error('Load history error:', e);
+            }
+        }
+
+        async function loadHouseStatusFromSupabase() {
+            if (!supabaseClient) return;
+            try {
+                const { data } = await supabaseClient.from('pbb_house_status').select('*').order('id', { ascending: false }).limit(1);
+                if (data && data.length > 0) {
+                    const status = data[0];
+                    if (status.weekly_task) {
+                        document.getElementById('taskNameDisplay').innerText = status.weekly_task;
+                        document.getElementById('adminTask').value = status.weekly_task;
+                    }
+                    if (status.task_status) document.getElementById('taskStatusDisplay').innerText = status.task_status;
+                    if (status.eviction_night) {
+                        document.getElementById('evictionDisplay').innerText = status.eviction_night;
+                        document.getElementById('adminEviction').value = status.eviction_night;
+                    }
+                }
+            } catch (e) {
+                console.error('House status fetch error:', e);
+            }
+        }
+
+        async function saveHouseStatusToSupabase() {
+            if (!supabaseClient) return;
+            const weekly_task = document.getElementById('adminTask').value;
+            const eviction_night = document.getElementById('adminEviction').value;
+
+            try {
+                const { error } = await supabaseClient.from('pbb_house_status').insert([{ weekly_task, task_status: 'IN PROGRESS', eviction_night }]);
+                if (!error) {
+                    alert('House status updated successfully!');
+                    toggleAdminModal(false);
+                    loadHouseStatusFromSupabase();
+                }
+            } catch (e) {
+                alert('Exception: ' + e.message);
+            }
+        }
+
+        async function sendSupabaseMessage() {
+            const userBox = document.getElementById('chatUser');
+            const inputBox = document.getElementById('chatInput');
+            const username = userBox.value.trim() || 'Anonymous';
+            const text = inputBox.value.trim();
+            if (!text) return;
+
+            inputBox.value = '';
+            appendChatMessage(username, text, true);
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient.from('pbb_chat').insert([{ username: username, text: text }]);
+                } catch (e) {
+                    console.error('Supabase send exception:', e);
+                }
+            }
+        }
+
+        function toggleChatSidebar() {
+            document.getElementById('chatSidebar').classList.toggle('open');
+        }
+
+        function toggleCommunityDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('communityDropdownMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function closeDropdowns() {
+            document.getElementById('communityDropdownMenu').style.display = 'none';
+        }
+
+        document.addEventListener('click', () => {
+            const menu = document.getElementById('communityDropdownMenu');
+            if (menu) menu.style.display = 'none';
+        });
+
+        function toggleSoundboardModal(show) {
+            document.getElementById('soundboardModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function toggleTaskModal(show) {
+            document.getElementById('taskModal').style.display = show ? 'flex' : 'none';
+        }
+
+        function toggleHousemateModal(show) {
+            document.getElementById('housemateModal').style.display = show ? 'flex' : 'none';
+            updateVoteStatusDisplay();
+        }
+
+        function toggleAdminLoginModal(show) {
+            const modal = document.getElementById('adminLoginModal');
+            if (show) {
+                modal.style.display = 'flex';
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
+        function verifyAdminPassword() {
+            const inputVal = document.getElementById('adminPasswordInput').value;
+            if (inputVal === '@Cnet2024') {
+                toggleAdminLoginModal(false);
+                document.getElementById('adminModal').style.display = 'flex';
+            } else {
+                alert('❌ Incorrect Admin Password!');
+            }
+        }
+
+        function toggleAdminModal(show) {
+            if (show) {
+                toggleAdminLoginModal(true);
+            } else {
+                document.getElementById('adminModal').style.display = 'none';
+            }
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'thisIsBigBrother') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(60, ctx.currentTime + 0.5);
+                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.5);
+                } else if (type === 'doorBuzz') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(80, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.setValueAtTime(0, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } else if (type === 'timerBeep') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } else if (type === 'evictionChime') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.2);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.8);
+                }
+            } catch (e) {
+                console.log('Audio note:', e);
+            }
+        }
+
+        function appendChatMessage(user, text, scroll = true) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg';
+            div.innerHTML = `<span class="chat-msg-user">${escapeHtml(user)}</span><span class="chat-msg-text">${escapeHtml(text)}</span>`;
+            container.appendChild(div);
+            if (scroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        async function initAllPlayers() {
+            shaka.polyfill.installAll();
+            if (!shaka.Player.isBrowserSupported()) {
+                alert('Browser not supported for Shaka Player!');
+                return;
+            }
+
+            for (let i = 0; i < feeds.length; i++) {
+                const videoEl = document.getElementById(`video${i}`);
+                const player = new shaka.Player(videoEl);
+                players.push(player);
+
+                if (feeds[i].keyId && feeds[i].key) {
+                    player.configure({
+                        drm: {
+                            clearKeys: {
+                                [feeds[i].keyId]: feeds[i].key
+                            }
+                        }
+                    });
+                }
+
+                try {
+                    await player.load(feeds[i].url);
+                    console.log(`Feed ${i} loaded successfully.`);
+                    populateQualitySelector(i, player);
+                } catch (e) {
+                    console.error(`Feed ${i} load failed:`, e);
+                }
+
+                setInterval(() => {
+                    const stats = player.getStats();
+                    const hud = document.getElementById(`hud${i}`);
+                    if (hud) {
+                        hud.innerText = `${stats.height || 1080}p • ${(stats.streamBandwidth / 1000000).toFixed(1)} Mbps • ${stats.loadLatency.toFixed(1)}s`;
+                    }
+
+                    const video = document.getElementById(`video${i}`);
+                    const vumeter = document.getElementById(`vumeter${i}`);
+                    if (vumeter) {
+                        const spans = vumeter.querySelectorAll('span');
+                        spans.forEach(span => {
+                            const heightPct = (!video.muted && !video.paused) ? Math.floor(Math.random() * 80 + 20) + '%' : '10%';
+                            span.style.height = heightPct;
+                        });
+                    }
+                }, 2000);
+            }
+        }
+
+        function saveAlias(index, name) {
+            let aliases = JSON.parse(localStorage.getItem('pbb_camera_aliases') || '{}');
+            aliases[index] = name;
+            localStorage.setItem('pbb_camera_aliases', JSON.stringify(aliases));
+        }
+
+        function loadAliases() {
+            let aliases = JSON.parse(localStorage.getItem('pbb_camera_aliases') || '{}');
+            for (let i = 0; i < 4; i++) {
+                if (aliases[i]) {
+                    document.getElementById(`title${i}`).value = aliases[i];
+                }
+            }
+        }
+
+        async function copyFrameToClipboard(index) {
+            const video = document.getElementById(`video${index}`);
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 1280;
+                canvas.height = video.videoHeight || 720;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob(async (blob) => {
+                    try {
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        alert(`📸 Camera ${index + 1} snapshot copied to clipboard! You can now paste it directly.`);
+                    } catch (err) {
+                        alert('Clipboard write failed or blocked by browser permissions.');
+                    }
+                }, 'image/png');
+            } catch (e) {
+                console.error('Clipboard copy error:', e);
+                alert('Snapshot copy not supported on this browser/stream.');
+            }
+        }
+
+        function seekDvr(index, val) {
+            const player = players[index];
+            if (!player) return;
+            const range = player.seekRange();
+            const targetTime = range.start + (val / 100) * (range.end - range.start);
+            player.getMediaElement().currentTime = targetTime;
+        }
+
+        function zoomVideo(index, delta) {
+            zoomLevels[index] = Math.max(1, Math.min(3, parseFloat((zoomLevels[index] + delta).toFixed(1))));
+            const video = document.getElementById(`video${index}`);
+            video.style.transform = `scale(${zoomLevels[index]})`;
+            document.getElementById(`zoomLabel${index}`).innerText = `${zoomLevels[index].toFixed(1)}x`;
+        }
+
+        function resetZoom(index) {
+            zoomLevels[index] = 1;
+            const video = document.getElementById(`video${index}`);
+            video.style.transform = `scale(1)`;
+            document.getElementById(`zoomLabel${index}`).innerText = '1.0x';
+        }
+
+        function initAudioBoost(index) {
+            if (!audioInitialized[index]) {
+                try {
+                    const video = document.getElementById(`video${index}`);
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    audioContexts[index] = new AudioContext();
+                    const source = audioContexts[index].createMediaElementSource(video);
+                    gainNodes[index] = audioContexts[index].createGain();
+                    source.connect(gainNodes[index]);
+                    gainNodes[index].connect(audioContexts[index].destination);
+                    audioInitialized[index] = true;
+                } catch (e) {
+                    console.log('Audio boost init error:', e);
+                }
+            }
+        }
+
+        function setVolumeBoost(index, boostMultiplier) {
+            const video = document.getElementById(`video${index}`);
+            video.volume = Math.min(1, boostMultiplier);
+            if (gainNodes[index]) {
+                gainNodes[index].gain.value = boostMultiplier;
+            }
+            document.getElementById(`volLabel${index}`).innerText = `${Math.round(boostMultiplier * 100)}%`;
+        }
+
+        function populateQualitySelector(index, player) {
+            const select = document.getElementById(`quality${index}`);
+            if (!select) return;
+            const tracks = player.getVariantTracks();
+            const heights = [...new Set(tracks.map(t => t.height))].filter(Boolean).sort((a,b) => b - a);
+
+            heights.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.innerText = `${h}p`;
+                select.appendChild(opt);
+            });
+        }
+
+        function changeQuality(index, height) {
+            const player = players[index];
+            if (!player) return;
+            if (height === 'auto') {
+                player.configure({ abr: { enabled: true } });
+            } else {
+                player.configure({ abr: { enabled: false } });
+                const tracks = player.getVariantTracks();
+                const target = tracks.find(t => t.height === parseInt(height));
+                if (target) {
+                    player.selectVariantTrack(target, true);
+                }
+            }
+        }
+
+        function setLayout(mode) {
+            const container = document.getElementById('mainContainer');
+            const btnGrid = document.getElementById('btnGrid');
+            const btnFocus = document.getElementById('btnFocus');
+            document.getElementById('layoutSelect').value = mode;
+            expandedIndex = null;
+
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`card${i}`).style.display = 'flex';
+            }
+
+            container.className = `multiview-container mode-${mode}`;
+            saveState();
+        }
+
+        function toggleExpandCard(index) {
+            const container = document.getElementById('mainContainer');
+            if (expandedIndex === index) {
+                setLayout('grid');
+            } else {
+                container.className = 'multiview-container mode-focus';
+                for (let i = 0; i < 4; i++) {
+                    document.getElementById(`card${i}`).style.display = (i === index) ? 'flex' : 'none';
+                }
+                expandedIndex = index;
+            }
+        }
+
+        function toggleMute(index) {
+            const video = document.getElementById(`video${index}`);
+            const btn = document.getElementById(`muteBtn${index}`);
+            video.muted = !video.muted;
+            btn.innerText = video.muted ? '🔇 Mute' : '🔊 Sound';
+            saveState();
+        }
+
+        function muteAll() {
+            for (let i = 0; i < 4; i++) {
+                const video = document.getElementById(`video${i}`);
+                const btn = document.getElementById(`muteBtn${i}`);
+                video.muted = true;
+                btn.innerText = '🔇 Mute';
+            }
+            saveState();
+        }
+
+        function resumeAll() {
+            for (let i = 0; i < 4; i++) {
+                const video = document.getElementById(`video${i}`);
+                video.play().catch(() => {});
+            }
+            isPanicked = false;
+            document.body.style.filter = 'none';
+        }
+
+        function unmuteAll() {
+            for (let i = 0; i < 4; i++) {
+                const video = document.getElementById(`video${i}`);
+                const btn = document.getElementById(`muteBtn${i}`);
+                video.muted = false;
+                btn.innerText = '🔊 Sound';
+            }
+            saveState();
+        }
+
+        function toggleNightVision(index) {
+            const box = document.getElementById(`box${index}`);
+            box.classList.toggle('night-vision');
+        }
+
+        function togglePanic() {
+            isPanicked = !isPanicked;
+            for (let i = 0; i < 4; i++) {
+                const video = document.getElementById(`video${i}`);
+                const btn = document.getElementById(`muteBtn${i}`);
+                video.muted = isPanicked;
+                if (isPanicked) {
+                    video.pause();
+                    btn.innerText = '🔇 Mute';
+                } else {
+                    video.play();
+                }
+            }
+            document.body.style.filter = isPanicked ? 'grayscale(100%) brightness(15%)' : 'none';
+        }
+
+        async function togglePip(index) {
+            const video = document.getElementById(`video${index}`);
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else if (document.pictureInPictureEnabled) {
+                    await video.requestPictureInPicture();
+                }
+            } catch (e) {
+                console.error('PIP error:', e);
+            }
+        }
+
+        function toggleFullscreen(index) {
+            const box = document.getElementById(`video${index}`);
+            if (box.requestFullscreen) {
+                box.requestFullscreen();
+            } else if (box.webkitRequestFullscreen) {
+                box.webkitRequestFullscreen();
+            }
+        }
+
+        function toggleMatrixWall() {
+            const topBar = document.getElementById('topBar');
+            const isHidden = topBar.style.display === 'none';
+            topBar.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden && document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            } else if (!isHidden) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        }
+
+        // iOS PWA Detection
+        function checkIosPwa() {
+            const isIOS = /ipad|iphone|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+            const isInStandalone = ('standalone' in window.navigator) && (window.navigator.standalone);
+            const dismissed = localStorage.getItem('pbb_ios_banner_dismissed');
+
+            if (isIOS && !isInStandalone && !dismissed) {
+                document.getElementById('iosPwaBanner').style.display = 'flex';
+            }
+        }
+
+        function dismissIosBanner() {
+            document.getElementById('iosPwaBanner').style.display = 'none';
+            localStorage.setItem('pbb_ios_banner_dismissed', 'true');
+        }
+
+        // Keyboard Hotkeys: 1, 2, 3, 4, M, F, ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.key === '1') toggleMute(0);
+            if (e.key === '2') toggleMute(1);
+            if (e.key === '3') toggleMute(2);
+            if (e.key === '4') toggleMute(3);
+            if (e.key === 'm' || e.key === 'M') muteAll();
+            if (e.key === 'f' || e.key === 'F') toggleMatrixWall();
+            if (e.key === 'Escape') togglePanic();
+        });
+
+        function changeTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            saveState();
+        }
+
+        function toggleDonateModal(show) {
+            const modal = document.getElementById('donationModal');
+            const closeBtn = document.getElementById('modalCloseBtn');
+            const countdownSpan = document.getElementById('adCountdown');
+
+            if (show) {
+                modal.style.display = 'flex';
+                timeLeft = 30;
+                closeBtn.disabled = true;
+                closeBtn.style.opacity = '0.5';
+                closeBtn.style.cursor = 'not-allowed';
+                countdownSpan.innerText = ` (${timeLeft}s)`;
+
+                if (adCountdownTimer) clearInterval(adCountdownTimer);
+                adCountdownTimer = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft > 0) {
+                        countdownSpan.innerText = ` (${timeLeft}s)`;
+                    } else {
+                        clearInterval(adCountdownTimer);
+                        countdownSpan.innerText = '';
+                        closeBtn.disabled = false;
+                        closeBtn.style.opacity = '1';
+                        closeBtn.style.cursor = 'pointer';
+                    }
+                }, 1000);
+            } else {
+                if (timeLeft <= 0) {
+                    modal.style.display = 'none';
+                    if (adCountdownTimer) clearInterval(adCountdownTimer);
+                }
+            }
+        }
+
+        function initAdPopupScheduler() {
+            const lastSaved = localStorage.getItem('pbb_last_ad_time');
+            const now = Date.now();
+            const randomHours = Math.random() * 2 + 1; // 1 to 3 hours
+            const intervalMs = randomHours * 3600 * 1000;
+
+            if (!lastSaved) {
+                localStorage.setItem('pbb_last_ad_time', now.toString());
+                return;
+            }
+
+            const elapsed = now - parseInt(lastSaved);
+            if (elapsed > intervalMs) {
+                setTimeout(() => {
+                    toggleDonateModal(true);
+                    localStorage.setItem('pbb_last_ad_time', Date.now().toString());
+                }, 3000);
+            }
+        }
+
+        function enlargeQR() {
+            document.getElementById('qrZoomModal').style.display = 'flex';
+        }
+
+        function toggleQrZoom(show) {
+            document.getElementById('qrZoomModal').style.display = show ? 'flex' : 'none';
+        }
+
+        // Layout & Mute State Memory (localStorage)
+        function saveState() {
+            const state = {
+                theme: document.body.getAttribute('data-theme') || 'default',
+                layout: document.getElementById('mainContainer').className.replace('multiview-container ', '') || 'mode-grid',
+                muted: [
+                    document.getElementById('video0').muted,
+                    document.getElementById('video1').muted,
+                    document.getElementById('video2').muted,
+                    document.getElementById('video3').muted
+                ]
+            };
+            localStorage.setItem('pbb_command_state', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('pbb_command_state');
+            if (!saved) return;
+            try {
+                const state = JSON.parse(saved);
+                if (state.theme) {
+                    document.body.setAttribute('data-theme', state.theme);
+                    document.getElementById('themeSelect').value = state.theme;
+                }
+                if (state.layout) {
+                    const mode = state.layout.replace('mode-', '');
+                    setLayout(mode);
+                }
+                if (state.muted && Array.isArray(state.muted)) {
+                    state.muted.forEach((isMuted, i) => {
+                        const video = document.getElementById(`video${i}`);
+                        const btn = document.getElementById(`muteBtn${i}`);
+                        video.muted = isMuted;
+                        btn.innerText = isMuted ? '🔇 Mute' : '🔊 Sound';
+                    });
+                }
+            }	 catch (e) {
+                console.error('Load state error:', e);
+            }
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: true }) + ' PHT';
+            document.getElementById('clockDisplay').innerText = timeString;
+        }
+        setInterval(updateClock, 1000);
+
+        const clientId = Math.random().toString(36).substring(7);
+
+        function updateRealWatchers() {
+            let activeTabs = JSON.parse(localStorage.getItem('pbb_active_tabs') || '{}');
+            const now = Date.now();
+
+            Object.keys(activeTabs).forEach(id => {
+                if (now - activeTabs[id] > 5000) {
+                    delete activeTabs[id];
+                }
+            });
+
+            activeTabs[clientId] = now;
+            localStorage.setItem('pbb_active_tabs', JSON.stringify(activeTabs));
+
+            const count = Object.keys(activeTabs).length;
+            document.getElementById('viewerCount').innerText = count;
+        }
+
+        setInterval(updateRealWatchers, 2000);
+        window.addEventListener('beforeunload', () => {
+            let activeTabs = JSON.parse(localStorage.getItem('pbb_active_tabs') || '{}');
+            delete activeTabs[clientId];
+            localStorage.setItem('pbb_active_tabs', JSON.stringify(activeTabs));
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initAllPlayers();
+            updateClock();
+            updateRealWatchers();
+            loadAliases();
+            loadState();
+            initAdPopupScheduler();
+            checkIosPwa();
+            initSupabaseApp();
+        });
+    </script>
+</body>
+</html>
